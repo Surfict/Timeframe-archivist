@@ -2,32 +2,28 @@ events:
   ufutsal:
     event_start: "19:45"
     event_stop: "22:30"
-    complex_naming: true
-    simple_name_value: 
-    complex_name_start: "Goal diggers "
+    complex_naming: "true"
+    video_title: "Goal diggers "
     complex_name_format_helper: "Format awaited : '15 - 5 opponent_name'"
     end_with_date: true
   wollishofen_wolves:
     event_start: "19:30"
     event_stop: "22:05"
     complex_naming: false
-    simple_name_value: "Wollishofen wolves"
-    complex_name_start:
+    video_title: "Wollishofen wolves"
     complex_name_format_helper:
     end_with_date: true
   wednesday_football:
     event_start: "18:20"
     event_stop: "20:05"
     complex_naming: false
-    simple_name_value: "Wednesday football"
-    complex_name_start:
+    video_title: "Wednesday football"
     complex_name_format_helper:
     end_with_date: true
   enge_football:
     event_start: "18:20"
     event_stop: "20:05"
     complex_naming: false
-    simple_name_value: "Enge football"
-    complex_name_start:
+    video_title: "Enge football"
     complex_name_format_helper:
     end_with_date: true
