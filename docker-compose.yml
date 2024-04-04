@@ -2,9 +2,11 @@
 version: '3.8'
 
 services:
-    python_service:
+    timeframe_archivist:
         image: python:3.11.4-slim-buster
         volumes:
             - .:/app
         working_dir: /app/app
         command: sh -c "pip install -r requirements.txt && python main.py"
+        stdin_open: true
+        tty: true
