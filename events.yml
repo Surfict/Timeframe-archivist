@@ -4,7 +4,7 @@ events:
     event_stop: "22:30"
     complex_naming: "true"
     video_title: "Goal diggers "
-    complex_name_format_helper: "Format awaited : '15 - 5 opponent_name'"
+    complex_name_format_helper: "Format awaited : 'Goal diggers 15 - 5 opponent_name'"
     end_with_date: true
   wollishofen_wolves:
     event_start: "19:30"
