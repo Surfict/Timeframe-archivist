@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator, ValidationError, root_validator, Optional
+from pydantic import BaseModel, Field, validator, ValidationError, root_validator
 from typing import Any, Optional, TypedDict
 
 class Event(BaseModel):
@@ -6,7 +6,7 @@ class Event(BaseModel):
     event_stop: str
     complex_naming: bool
     video_title: str
-    complex_name_format_helper: Optional[str] = None
+    complex_name_format_helper: str | None 
     title_end_with_date: bool
     
     
@@ -19,7 +19,7 @@ class Event(BaseModel):
     
 class Inputs(BaseModel):
     day: str
-    complex_title_end: Optional[str] = None
+    complex_title_end: str | None
     event: Event
     
     # complex_title_end can't be empty if event.complex_naming = true
