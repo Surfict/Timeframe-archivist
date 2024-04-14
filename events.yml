@@ -2,6 +2,7 @@ events:
   ufutsal:
     event_start: "19:45"
     event_stop: "22:30"
+    event_timezone: "Romance Standard Time"
     complex_naming: "true"
     video_title: "Goal diggers "
     complex_name_format_helper: "Format awaited : 'Goal diggers 15 - 5 opponent_name'"
@@ -9,13 +10,15 @@ events:
   wollishofen_wolves:
     event_start: "19:30"
     event_stop: "22:05"
+    event_timezone: "Romance Standard Time"
     complex_naming: false
     video_title: "Wollishofen wolves"
     complex_name_format_helper:
     title_end_with_date: true
   wednesday_football:
-    event_start: "18:20"
+    event_start: "18:15"
     event_stop: "20:05"
+    event_timezone: "Romance Standard Time"
     complex_naming: false
     video_title: "Wednesday football"
     complex_name_format_helper:
@@ -23,6 +26,7 @@ events:
   enge_football:
     event_start: "18:20"
     event_stop: "20:05"
+    event_timezone: "Romance Standard Time"
     complex_naming: false
     video_title: "Enge football"
     complex_name_format_helper:

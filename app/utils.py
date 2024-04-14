@@ -8,6 +8,7 @@ class Event(BaseModel):
     video_title: str
     complex_name_format_helper: str | None 
     title_end_with_date: bool
+    event_timezone: str
     
     
     @validator('complex_name_format_helper', always=True, pre=True)

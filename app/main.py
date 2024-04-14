@@ -1,7 +1,9 @@
 from ast import Dict
 from datetime import datetime, timedelta
+from xmlrpc.client import boolean
 from dotenv import load_dotenv
 from enum import Enum
+import json
 import logging
 from logging import Logger
 from pathlib import Path
@@ -11,13 +13,15 @@ import typer
 import typing as ty
 import yaml
 
+import os
+
 
 # Internal files
-from app.local_copy import check_video_files_for_given_interval
+from powershell_calls import call_powershell_script
 from utils import Event, Inputs
 
 # Load environment variables from the .env file
-load_dotenv()
+load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
 
 # Definitions
 
@@ -52,7 +56,8 @@ def yaml_data_to_events(
                       complex_naming=yaml_data["events"][event]["complex_naming"], 
                       video_title=yaml_data["events"][event]["video_title"], 
                       complex_name_format_helper=yaml_data["events"][event]["complex_name_format_helper"],
-                      title_end_with_date=yaml_data["events"][event]["end_with_date"])
+                      title_end_with_date=yaml_data["events"][event]["end_with_date"],
+                      event_timezone=yaml_data["events"][event]["event_timezone"])
                     )
 
     return events
@@ -69,6 +74,21 @@ def generic_prompt(number_start: int, number_end: int) -> int:
         else:
             typer.echo("Invalid number chosen. Please choose a valid number.")
     return chosen_number
+
+
+def prompt_validation_videos_found(videos_infos: str) -> boolean:
+    """
+    This function displays available videos found on the iphone and ask the user
+    to validate if it corresponds to what he wants
+    """
+    typer.echo("Videos found on the device : ")
+    videos = json.loads(videos_infos)
+    for video in videos:
+        typer.echo(f"Size : {video['SizeMB']} - Date created : {video['CreationDate']} - Name : {video['Name']}")
+        
+    user_satisfied = typer.confirm("Do you want to continue ? ", default=True)
+
+    return user_satisfied
 
 
 def prompt_options(events: ty.List[Event]) -> Inputs:
@@ -148,20 +168,25 @@ def main(
 ) -> None:
     logger: Logger = logging.getLogger(__name__)
     logging.basicConfig(level=log_level)
-    typer.echo(f"Welcome to the Timeframe archivist !")
+    typer.echo(f"Welcome to the Timeframe Archivist !")
     #logger.info(f"")
     #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
     #inputs_result = prompt_options(events)
-    event =  Event(event_start="18:20",
-                      event_stop="20:05",
+    event =  Event(event_start="19:45",
+                      event_stop="22:30",
                       complex_naming=False, 
                       video_title="Wednesday football", 
                       complex_name_format_helper="",
-                      title_end_with_date=True)
+                      title_end_with_date=True,
+                      event_timezone="Romance Standard Time")
 
-    inputs_result = Inputs(day="03/04/2024", event=event, complex_title_end="")
-    test = check_video_files_for_given_interval(inputs_result)   
-
+    inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
+    available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
+    if prompt_validation_videos_found(available_videos):
+        # First, we copy the files to the computer
+        test = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
+        print(test)
+        
 
 if __name__ == "__main__":
     typer.run(main)
