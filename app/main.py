@@ -19,7 +19,7 @@ import os
 
 # Internal files
 from powershell_calls import call_powershell_script
-from utils import Event, Inputs
+from utils import Event, Inputs, windows_to_wsl2_path, get_extension
 
 # Load environment variables from the .env file
 load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
@@ -93,11 +93,8 @@ def prompt_validation_videos_found(videos_infos: str) -> boolean:
     to validate if it corresponds to what he wants.
     """
     
-    videos = json.loads(videos_infos)
-    # Order videos by date created asc
-    sorted_videos = sorted(videos, key=lambda x: x['CreationDate'])
     typer.echo("Videos found on the device : ")
-    for video in sorted_videos:
+    for video in videos_infos:
         typer.echo(f"Size : {video['SizeMB']} - Date created : {video['CreationDate']} - Name : {video['Name']}")
         
     user_satisfied = typer.confirm("Do you want to continue ? ", default=True)
@@ -179,22 +176,73 @@ def prompt_options(events: ty.List[Event]) -> Inputs:
 def copy_videos_to_windows(inputs_result: Inputs):
     # Copy files to computer
     results_copy = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
-    if results_copy:
-        typer.echo(f"Videos have been transferred to {os.getenv('WINDOWS_DESTINATION_FOLDER')} with success !")
+    results_json = json.loads(results_copy)
+    if isinstance(results_json, dict) and results_json["Error"]:
+        raise ValueError(f'{results_json["Error"]}')
     else:
-        raise ValueError(f"Error while copying files")
+        typer.echo(f"Videos have been transferred to {os.getenv('WINDOWS_DESTINATION_FOLDER')} with success !")
         
         
 def check_available_videos(inputs_result: Inputs):
     available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
-    available_videos_json = json.loads(json.loads(available_videos)) # Thanks to https://stackoverflow.com/questions/25613565/python-json-loads-returning-string-instead-of-dictionary
+    available_videos_json = json.loads(available_videos)
+    if isinstance(available_videos_json, str): 
+        available_videos_json = json.loads(available_videos_json) # Thanks to https://stackoverflow.com/questions/25613565/python-json-loads-returning-string-instead-of-dictionary
     if available_videos_json == {}:
         raise ValueError(f"No video founds for the given parameters (Day: {inputs_result.day}, Start : {inputs_result.event.event_start} Stop : {inputs_result.event.event_stop} Timezone : {inputs_result.event.event_timezone})")
-    elif available_videos_json["Error"]:
+    elif isinstance(available_videos_json, dict) and available_videos_json["Error"]:
         raise ValueError(f'{available_videos_json["Error"]}')
     else:
-        return available_videos_json
+        # Order videos by date created asc
+        sorted_videos = sorted(available_videos_json, key=lambda x: x['CreationDate'])
+        return sorted_videos
     
+    
+def check_files_correctly_copied(available_videos: str):
+    """
+    This function checks if the files copied with powershell script is present on Windows
+    """
+    for video in available_videos:
+        wsl2_path = windows_to_wsl2_path(os.getenv("WINDOWS_DESTINATION_FOLDER"))
+        file_exists = os.path.exists(wsl2_path + "/" + video['Name'])
+        if not file_exists:
+            raise ValueError(f"File {video['Name']} has not been correctly copied to {os.getenv('WINDOWS_DESTINATION_FOLDER')}\\{video['Name']}")
+        
+        
+        
+def rename_videos_for_windows(available_videos: str, inputs_result: Inputs):
+    """
+    This function rename the videos with the desired selected options by the user on the Windows host
+    """
+    title_video = inputs_result.event.video_title
+    if inputs_result.event.complex_naming:
+        title_video = title_video + inputs_result.complex_title_end
+    if inputs_result.event.title_end_with_date:
+        title_video = title_video + " " + inputs_result.day.replace('/', '_')
+        
+    wsl2_path = windows_to_wsl2_path(os.getenv("WINDOWS_DESTINATION_FOLDER"))
+    if len(available_videos) == 1:
+        video_extension = get_extension(video['Name'])
+        video_old_path = wsl2_path + "/" + available_videos[0]['Name']
+        video_new_path = f"{wsl2_path}/{title_video}.{video_extension}"
+        try:
+            os.rename(video_old_path, video_new_path)
+        except OSError as e:
+            raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
+
+    else: 
+        len_videos = len(available_videos)
+        count = 1
+        for video in available_videos:
+            video_extension = get_extension(video['Name'])
+            video_old_path = wsl2_path + "/" + video['Name']
+            video_new_path = f"{wsl2_path}/{title_video} (Part {count} of {len_videos}).{video_extension}"
+            try:
+                os.rename(video_old_path, video_new_path)
+            except OSError as e:
+                raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
+            count = count + 1
+
     
 
 def main(
@@ -213,14 +261,17 @@ def main(
                       title_end_with_date=True,
                       event_timezone="Romance Standard Time",
                       validation_videos_found=True)
-    inputs_result = Inputs(day="24/03/2024", event=event, complex_title_end="")
+    inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
     try:
         #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
         #inputs_result = prompt_options(events)
         available_videos = check_available_videos(inputs_result)
         if inputs_result.event.validation_videos_found:  
             prompt_validation_videos_found(available_videos)
-        copy_videos_to_windows(inputs_result)
+        #copy_videos_to_windows(inputs_result)
+        #check_files_correctly_copied(available_videos)
+        rename_videos(available_videos, inputs_result)
+        
 
     except ValueError as e:
         console.print(f"Exiting due to an error: {e}", style="bold red")

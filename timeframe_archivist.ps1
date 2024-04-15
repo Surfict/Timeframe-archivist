@@ -121,9 +121,6 @@ elseif ($command -eq "copy_files") {
             $created = new-item -itemtype directory -path $files_destination_path
         }
  
-        Write-Host "Processing Path : $phoneName\$phoneFolderPath"
-        Write-Host "Moving to : $files_destination_path"
- 
         $destinationFolder = $shell.Namespace($files_destination_path).self
         foreach ($item in $filteredVideos)
         {
@@ -133,7 +130,7 @@ elseif ($command -eq "copy_files") {
             $targetFilePath = join-path -path $files_destination_path -childPath $fileName
             if (test-path -path $targetFilePath)
             {
-                    $errorMessage = "Destination file exists - file $($item.Name) not moved:`n`t$targetFilePath"
+                    $errorMessage = "Destination file exists - file $($item.Name) not moved to :`n`t$targetFilePath"
                     $errorObject = @{ Error = $errorMessage }
                     return $errorObject | ConvertTo-Json
             }
@@ -142,7 +139,7 @@ elseif ($command -eq "copy_files") {
                 $destinationFolder.GetFolder.CopyHere($item)
                 if (test-path -path $targetFilePath)
                 {
-                    # Optionally do something with the file, such as modify the name (e.g. removed phone-added prefix, etc.)
+                    
                 }
                 else
                 {
@@ -153,7 +150,7 @@ elseif ($command -eq "copy_files") {
             }
         }
     }
-    return $true
+    return '{"Result" "Success"}' | ConvertTo-Json
 
 }
 
