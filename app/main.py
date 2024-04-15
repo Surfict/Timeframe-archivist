@@ -184,9 +184,14 @@ def main(
                       title_end_with_date=True,
                       event_timezone="Romance Standard Time")
 
-    inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
+    inputs_result = Inputs(day="26/03/2024", event=event, complex_title_end="")
     available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
-    if available_videos and prompt_validation_videos_found(available_videos):
+    available_videos_json = json.loads(available_videos)
+    if available_videos_json == {}:
+        print(f"No video founds for the given parameters (Day: {inputs_result.day}, Start : {inputs_result.event.event_start} Stop : {inputs_result.event.event_stop} Timezone : {inputs_result.event.event_timezone})")
+        print(f"The script will now exit")
+        exit(True)
+    elif prompt_validation_videos_found(available_videos):
         # First, we copy the files to the computer
         test = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
         print(test)

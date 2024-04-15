@@ -13,7 +13,6 @@ import pytz
 
 def call_powershell_script(day: str, event_start: str, event_stop: str, event_timezone: str, command: str) -> str | None:
     windows_destination_folder = os.getenv("WINDOWS_DESTINATION_FOLDER")
-    print(windows_destination_folder)
     try:
         # Using subprocess.run to execute the command
         result = subprocess.run(f"powershell.exe -ExecutionPolicy Bypass -File timeframe_archivist.ps1 -day {day} -event_start {event_start} -event_stop {event_stop} -event_timezone '{event_timezone}' -command {command} -files_destination_path '{windows_destination_folder}' ", shell=True, text=True, capture_output=True, check=True)
