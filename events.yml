@@ -7,6 +7,7 @@ events:
     video_title: "Goal diggers "
     complex_name_format_helper: "Format awaited : 'Goal diggers 15 - 5 opponent_name'"
     title_end_with_date: true
+    validation_videos_found: true
   wollishofen_wolves:
     event_start: "19:30"
     event_stop: "22:05"
@@ -15,6 +16,7 @@ events:
     video_title: "Wollishofen wolves"
     complex_name_format_helper:
     title_end_with_date: true
+    validation_videos_found: true
   wednesday_football:
     event_start: "18:15"
     event_stop: "20:05"
@@ -23,6 +25,7 @@ events:
     video_title: "Wednesday football"
     complex_name_format_helper:
     title_end_with_date: true
+    validation_videos_found: true
   enge_football:
     event_start: "18:20"
     event_stop: "20:05"
@@ -31,3 +34,4 @@ events:
     video_title: "Enge football"
     complex_name_format_helper:
     title_end_with_date: true
+    validation_videos_found: true

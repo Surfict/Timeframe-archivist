@@ -40,17 +40,13 @@ function List-Videos {
     $folders = $SourceFolder.Items() | Where-Object { $_.IsFolder -and $_.Name.StartsWith($yearMonth) }
 
     foreach ($folder in $folders) {
-		$a = $folder.Name
+		#$a = $folder.Name
         $items = $folder.GetFolder.Items() | Where-Object { ($_.Name -like "*.mp4" -or $_.Name -like "*.MOV") }
         foreach ($item in $items) {
-			#$a = $item.Name
             $itemCreationTimeUTC = $item.ExtendedProperty("System.DateCreated")
 			$modifieddate = $itemCreationTime
-			#Write-Host "$modifieddate"
-			#Write-Host $item.ExtendedProperty("System.DateCreated") $item.Name
             
             if ($itemCreationTimeUTC -ge $startDateTimeUTC -and $itemCreationTimeUTC -le $endDateTimeUTC) {
-                #Write-Host $itemCreationTimeUTC $startDateTimeUTC $itemCreationTimeUTC $endDateTimeUTC
                 $filteredFiles += $item
             }
         }
@@ -75,8 +71,7 @@ $PhoneFolder = ($shell.NameSpace("shell:MyComputerFolder").Items() | where Type 
 
 # Check if the iphone is connected
 if ($null -eq $PhoneFolder) {
-    Write-Error "Iphone not found. Check that it is correctly plugged in your machine."
-    exit $false
+    return '{"Error" : "Iphone not found. Check that it is correctly plugged in your machine."}' | ConvertTo-Json
 }
 
 $SourceFolder = ($PhoneFolder.Items() | where {$_.IsFolder} | where Name -eq $phoneRelativePath).GetFolder
@@ -105,7 +100,12 @@ if ($command -eq "list_videos") {
         }
         $videoList += $videoObject
     }
-    return $jsonOutput = $videoList | ConvertTo-Json
+
+    if ($videoList.Count -eq 0) {
+        return "{}"
+    } else {
+        return $videoList | ConvertTo-Json
+    }
     
     
 }
@@ -133,7 +133,9 @@ elseif ($command -eq "copy_files") {
             $targetFilePath = join-path -path $files_destination_path -childPath $fileName
             if (test-path -path $targetFilePath)
             {
-                write-error "Destination file exists - file $($item.Name) not moved:`n`t$targetFilePath"
+                    $errorMessage = "Destination file exists - file $($item.Name) not moved:`n`t$targetFilePath"
+                    $errorObject = @{ Error = $errorMessage }
+                    return $errorObject | ConvertTo-Json
             }
             else
             {
@@ -144,23 +146,15 @@ elseif ($command -eq "copy_files") {
                 }
                 else
                 {
-                    write-error "Failed to move file to destination:`n`t$targetFilePath"
+                    $errorMessage = "Failed to move file $($item.Name) to destination:`n`t$targetFilePath"
+                    $errorObject = @{ Error = $errorMessage }
+                    return $errorObject | ConvertTo-Json
                 }
             }
         }
     }
+    return $true
 
-   # # Check if the destination path exists; if not, create it
-   # if (-not (Test-Path -Path $files_destination_path)) {
-   #     New-Item -Path $files_destination_path -ItemType Directory -Force
-   # }
-#
-   # # Copy each file from the filtered list to the specified destination
-   # foreach ($video in $filteredVideos) {
-   #     $destinationFilePath = Join-Path -Path $files_destination_path -ChildPath $video.Name
-   #     Copy-Item -Path $video.Path -Destination $destinationFilePath -Force
-   #     Write-Host "Copied `"$($video.Name)`" to `"$destinationFilePath`""
-   # }
 }
 
 elseif ($command -eq "delete_files") {

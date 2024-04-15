@@ -9,6 +9,7 @@ from logging import Logger
 from pathlib import Path
 from pydantic import BaseModel, Field, validator, ValidationError, root_validator
 import re
+from rich.console import Console
 import typer
 import typing as ty
 import yaml
@@ -26,7 +27,6 @@ load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
 # Definitions
 
 LOGGER = logging.getLogger(__name__)
-
 EVENTS_YAML_PATH = Path("../events.yml")
     
     
@@ -44,21 +44,31 @@ def yaml_data_to_events(
     """
     This function parse yaml data from events.yml file and return a list of events
     """
+    
+    # Ensure file exists
+    if not events_filepath.exists():
+        raise FileNotFoundError(f"YAML config file not found at {events_filepath}")
 
     events: ty.List[Event] = []
-    with open(events_filepath, "r") as file:
-        yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-        events_yaml = yaml_data["events"]
-        for event in events_yaml:
-            events.append(
-                Event(event_start=yaml_data["events"][event]["event_start"],
-                      event_stop=yaml_data["events"][event]["event_stop"],
-                      complex_naming=yaml_data["events"][event]["complex_naming"], 
-                      video_title=yaml_data["events"][event]["video_title"], 
-                      complex_name_format_helper=yaml_data["events"][event]["complex_name_format_helper"],
-                      title_end_with_date=yaml_data["events"][event]["end_with_date"],
-                      event_timezone=yaml_data["events"][event]["event_timezone"])
-                    )
+    try:
+        with open(events_filepath, "r") as file:
+            yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+            events_yaml = yaml_data["events"]
+            for event in events_yaml:
+                events.append(
+                    Event(event_start=yaml_data["events"][event]["event_start"],
+                          event_stop=yaml_data["events"][event]["event_stop"],
+                          complex_naming=yaml_data["events"][event]["complex_naming"], 
+                          video_title=yaml_data["events"][event]["video_title"], 
+                          complex_name_format_helper=yaml_data["events"][event]["complex_name_format_helper"],
+                          title_end_with_date=yaml_data["events"][event]["title_end_with_date"],
+                          event_timezone=yaml_data["events"][event]["event_timezone"],
+                          validation_videos_found=yaml_data["events"][event]["validation_videos_found"])
+                        )
+    except KeyError as e:
+        raise KeyError(f"Missing expected key in the YAML config file: {e}")
+    except yaml.YAMLError as e:
+        raise yaml.YAMLError(f"Error parsing YAML config file: {e}")
 
     return events
 
@@ -91,6 +101,9 @@ def prompt_validation_videos_found(videos_infos: str) -> boolean:
         typer.echo(f"Size : {video['SizeMB']} - Date created : {video['CreationDate']} - Name : {video['Name']}")
         
     user_satisfied = typer.confirm("Do you want to continue ? ", default=True)
+    
+    if not user_satisfied:
+        raise ValueError(f"User not satisfied with videos found on the Iphone")
 
     return user_satisfied
 
@@ -103,9 +116,7 @@ def prompt_options(events: ty.List[Event]) -> Inputs:
     - Is the even from today, yesterday or a specific given date
     And returns an Inputs object containing the user's answers.
     """
-    
-    # Pick event
-    
+        
     # Display the list of video titles with numbers
     for i, event in enumerate(events, start=1):
         typer.echo(f"{i}: {event.video_title}")
@@ -165,36 +176,61 @@ def prompt_options(events: ty.List[Event]) -> Inputs:
             
     return inputs
     
-
+def copy_videos_to_windows(inputs_result: Inputs):
+    # Copy files to computer
+    results_copy = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
+    if results_copy:
+        typer.echo(f"Videos have been transferred to {os.getenv('WINDOWS_DESTINATION_FOLDER')} with success !")
+    else:
+        raise ValueError(f"Error while copying files")
+        
+        
+def check_available_videos(inputs_result: Inputs):
+    available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
+    available_videos_json = json.loads(json.loads(available_videos)) # Thanks to https://stackoverflow.com/questions/25613565/python-json-loads-returning-string-instead-of-dictionary
+    if available_videos_json == {}:
+        raise ValueError(f"No video founds for the given parameters (Day: {inputs_result.day}, Start : {inputs_result.event.event_start} Stop : {inputs_result.event.event_stop} Timezone : {inputs_result.event.event_timezone})")
+    elif available_videos_json["Error"]:
+        raise ValueError(f'{available_videos_json["Error"]}')
+    else:
+        return available_videos_json
+    
+    
 
 def main(
     log_level: int = logging.INFO,
 ) -> None:
     logger: Logger = logging.getLogger(__name__)
     logging.basicConfig(level=log_level)
+    console = Console()
     typer.echo(f"Welcome to the Timeframe Archivist !")
-    #logger.info(f"")
-    #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
-    #inputs_result = prompt_options(events)
+
     event =  Event(event_start="19:45",
                       event_stop="22:30",
                       complex_naming=False, 
                       video_title="Wednesday football", 
                       complex_name_format_helper="",
                       title_end_with_date=True,
-                      event_timezone="Romance Standard Time")
+                      event_timezone="Romance Standard Time",
+                      validation_videos_found=True)
+    inputs_result = Inputs(day="24/03/2024", event=event, complex_title_end="")
+    try:
+        #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
+        #inputs_result = prompt_options(events)
+        available_videos = check_available_videos(inputs_result)
+        if inputs_result.event.validation_videos_found:  
+            prompt_validation_videos_found(available_videos)
+        copy_videos_to_windows(inputs_result)
 
-    inputs_result = Inputs(day="26/03/2024", event=event, complex_title_end="")
-    available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
-    available_videos_json = json.loads(available_videos)
-    if available_videos_json == {}:
-        print(f"No video founds for the given parameters (Day: {inputs_result.day}, Start : {inputs_result.event.event_start} Stop : {inputs_result.event.event_stop} Timezone : {inputs_result.event.event_timezone})")
-        print(f"The script will now exit")
-        exit(True)
-    elif prompt_validation_videos_found(available_videos):
-        # First, we copy the files to the computer
-        test = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
-        print(test)
+    except ValueError as e:
+        console.print(f"Exiting due to an error: {e}", style="bold red")
+        exit(1)        
+    
+    exit(0)
+        
+
+
+
         
 
 if __name__ == "__main__":
