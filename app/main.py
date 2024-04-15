@@ -78,12 +78,16 @@ def generic_prompt(number_start: int, number_end: int) -> int:
 
 def prompt_validation_videos_found(videos_infos: str) -> boolean:
     """
-    This function displays available videos found on the iphone and ask the user
-    to validate if it corresponds to what he wants
+    This function order videos_infos by ASC of date creation, 
+    displays available videos found on the Iphone, then ask the user
+    to validate if it corresponds to what he wants.
     """
-    typer.echo("Videos found on the device : ")
+    
     videos = json.loads(videos_infos)
-    for video in videos:
+    # Order videos by date created asc
+    sorted_videos = sorted(videos, key=lambda x: x['CreationDate'])
+    typer.echo("Videos found on the device : ")
+    for video in sorted_videos:
         typer.echo(f"Size : {video['SizeMB']} - Date created : {video['CreationDate']} - Name : {video['Name']}")
         
     user_satisfied = typer.confirm("Do you want to continue ? ", default=True)
@@ -182,7 +186,7 @@ def main(
 
     inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
     available_videos = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "list_videos")
-    if prompt_validation_videos_found(available_videos):
+    if available_videos and prompt_validation_videos_found(available_videos):
         # First, we copy the files to the computer
         test = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, "copy_files")
         print(test)
