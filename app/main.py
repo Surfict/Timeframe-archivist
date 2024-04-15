@@ -270,7 +270,7 @@ def main(
             prompt_validation_videos_found(available_videos)
         #copy_videos_to_windows(inputs_result)
         #check_files_correctly_copied(available_videos)
-        rename_videos(available_videos, inputs_result)
+        rename_videos_for_windows(available_videos, inputs_result)
         
 
     except ValueError as e:
