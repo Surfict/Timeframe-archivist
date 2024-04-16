@@ -19,7 +19,8 @@ import os
 
 # Internal files
 from powershell_calls import call_powershell_script
-from utils import Event, Inputs, windows_to_wsl2_path, get_extension
+from utils import Event, Inputs,InputsDataWrapper, windows_to_wsl2_path, get_extension
+from app.s3 import upload_file_to_s3
 
 # Load environment variables from the .env file
 load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
@@ -63,7 +64,9 @@ def yaml_data_to_events(
                           complex_name_format_helper=yaml_data["events"][event]["complex_name_format_helper"],
                           title_end_with_date=yaml_data["events"][event]["title_end_with_date"],
                           event_timezone=yaml_data["events"][event]["event_timezone"],
-                          validation_videos_found=yaml_data["events"][event]["validation_videos_found"])
+                          validation_videos_found=yaml_data["events"][event]["validation_videos_found"],
+                          S3_upload=yaml_data["events"][event]["S3_upload"],
+                          S3_storage_class=yaml_data["events"][event]["S3_storage_class"])
                         )
     except KeyError as e:
         raise KeyError(f"Missing expected key in the YAML config file: {e}")
@@ -208,6 +211,53 @@ def check_files_correctly_copied(available_videos: str):
         if not file_exists:
             raise ValueError(f"File {video['Name']} has not been correctly copied to {os.getenv('WINDOWS_DESTINATION_FOLDER')}\\{video['Name']}")
         
+# TODO ENUM
+        
+def videos_renaming(available_videos: str, inputs_result: Inputs):
+    """
+    This function rename the videos with the desired selected options by the user on the Windows host
+    """
+    
+    title_video = inputs_result.event.video_title
+    if inputs_result.event.complex_naming:
+        title_video = title_video + inputs_result.complex_title_end
+    if inputs_result.event.title_end_with_date:
+            title_video_windows = title_video + " " + inputs_result.day.replace('/', '_')
+            title_video_common = title_video + " " + inputs_result.day
+            
+    wsl2_path = windows_to_wsl2_path(os.getenv("WINDOWS_DESTINATION_FOLDER"))
+    titles_video_windows = [str]
+    titles_videos_common = []
+    if len(available_videos) == 1:  
+        video_extension = get_extension(available_videos[0]['Name'])
+        video_old_path = wsl2_path + "/" + available_videos[0]['Name']
+        video_new_path = f"{wsl2_path}/{title_video}.{video_extension}" 
+        titles_video_windows.append()
+        
+    
+    if len(available_videos) == 1:
+        video_extension = get_extension(video['Name'])
+        video_old_path = wsl2_path + "/" + available_videos[0]['Name']
+        video_new_path = f"{wsl2_path}/{title_video}.{video_extension}"
+        try:
+            os.rename(video_old_path, video_new_path)
+        except OSError as e:
+            raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
+
+    else: 
+        len_videos = len(available_videos)
+        count = 1
+        for video in available_videos:
+            video_extension = get_extension(video['Name'])
+            video_old_path = wsl2_path + "/" + video['Name']
+            video_new_path = f"{wsl2_path}/{title_video} (Part {count} of {len_videos}).{video_extension}"
+            try:
+                os.rename(video_old_path, video_new_path)
+            except OSError as e:
+                raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
+            count = count + 1  
+            
+    completed_data_inputs = InputsDataWrapper(inputs_result, )   
         
         
 def rename_videos_for_windows(available_videos: str, inputs_result: Inputs):
@@ -260,17 +310,20 @@ def main(
                       complex_name_format_helper="",
                       title_end_with_date=True,
                       event_timezone="Romance Standard Time",
-                      validation_videos_found=True)
+                      validation_videos_found=True,
+                      S3_upload=True,
+                      S3_storage_class="DEEP_ARCHIVE")
     inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
     try:
         #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
         #inputs_result = prompt_options(events)
-        available_videos = check_available_videos(inputs_result)
-        if inputs_result.event.validation_videos_found:  
-            prompt_validation_videos_found(available_videos)
+        #available_videos = check_available_videos(inputs_result)
+        #if inputs_result.event.validation_videos_found:  
+        #    prompt_validation_videos_found(available_videos)
         #copy_videos_to_windows(inputs_result)
         #check_files_correctly_copied(available_videos)
-        rename_videos_for_windows(available_videos, inputs_result)
+        #rename_videos_for_windows(available_videos, inputs_result)
+        upload_file_to_s3(inputs_result)
         
 
     except ValueError as e:

@@ -11,6 +11,8 @@ class Event(BaseModel):
     title_end_with_date: bool
     event_timezone: str
     validation_videos_found: bool
+    S3_upload: bool
+    S3_storage_class: str | None
     
     
     @validator('complex_name_format_helper', always=True, pre=True)
@@ -18,6 +20,13 @@ class Event(BaseModel):
         if 'complex_naming' in values and values['complex_naming']:
             if not v:
                 raise ValueError('complex_name_format_helper is mandatory when complex_naming is True')
+        return v
+    
+    @validator('S3_storage_class', always=True, pre=True)
+    def check_S3_storage_class_value_based_on_S3_upload(cls, v: Any, values: dict[str, Any]):
+        if 'S3_upload' in values and values['S3_upload']:
+            if not v:
+                raise ValueError('S3_storage_class is mandatory when S3_upload is True')
         return v
     
 class Inputs(BaseModel):
@@ -33,6 +42,13 @@ class Inputs(BaseModel):
         if event and event.complex_naming and not complex_title_end:
             raise ValueError('complex_title_end is required when complex_naming is True in the event')
         return values
+    
+class InputsDataWrapper(BaseModel):
+    inputs: Inputs
+    windows_title: str
+    common_title: str
+    wsl_full_path: str    
+    
     
 def windows_to_wsl2_path(windows_path: str) -> str:
     """
