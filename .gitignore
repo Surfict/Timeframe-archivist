@@ -11,7 +11,7 @@ venv.bak/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/tasks.json
-
+.VSCodeCounter
 # Distribution / packaging
 .Python
 build/

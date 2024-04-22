@@ -13,6 +13,10 @@ class Event(BaseModel):
     validation_videos_found: bool
     S3_upload: bool
     S3_storage_class: str | None
+    nextcloud_upload: bool
+    nextcloud_folder: str | None
+    nextcloud_public_share : bool | None
+    nextcloud_telegram_notification: bool | None
     
     
     @validator('complex_name_format_helper', always=True, pre=True)
@@ -27,6 +31,27 @@ class Event(BaseModel):
         if 'S3_upload' in values and values['S3_upload']:
             if not v:
                 raise ValueError('S3_storage_class is mandatory when S3_upload is True')
+        return v
+    
+    @validator('nextcloud_folder', always=True, pre=True)
+    def check_nextcloud_folder_based_on_nextcloud_upload(cls, v: Any, values: dict[str, Any]):
+        if 'nextcloud_upload' in values and values['nextcloud_upload']:
+            if not v:
+                raise ValueError('nextcloud_folder is mandatory when nextcloud_upload is True')
+        return v
+    
+    @validator('nextcloud_public_share', always=True, pre=True)
+    def check_nextcloud_public_share_value_based_on_nextcloud_upload(cls, v: Any, values: dict[str, Any]):
+        if 'nextcloud_upload' in values and values['nextcloud_upload']:
+            if not v:
+                raise ValueError('nextcloud_public_share is mandatory when nextcloud_upload is True')
+        return v
+    
+    @validator('nextcloud_telegram_notification', always=True, pre=True)
+    def check_nextcloud_telegram_notification_value_based_on_nextcloud_upload(cls, v: Any, values: dict[str, Any]):
+        if 'nextcloud_upload' in values and values['nextcloud_upload']:
+            if not v:
+                raise ValueError('nextcloud_telegram_notification is mandatory when nextcloud_upload is True')
         return v
     
 class Inputs(BaseModel):
@@ -48,6 +73,11 @@ class InputsDataWrapper(BaseModel):
     windows_title: str
     common_title: str
     wsl_full_path: str    
+    
+class VideosBasicInfos(BaseModel):
+    SizeMB: int
+    CreationDate: str
+    Name: str
     
     
 def windows_to_wsl2_path(windows_path: str) -> str:

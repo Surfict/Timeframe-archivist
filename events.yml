@@ -10,6 +10,10 @@ events:
     validation_videos_found: true
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    nextcloud_upload: true
+    nextcloud_folder: ""
+    nextcloud_public_share: true
+    nextcloud_telegram_notification: true
   wollishofen_wolves:
     event_start: "19:30"
     event_stop: "22:05"
@@ -21,6 +25,10 @@ events:
     validation_videos_found: true
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    nextcloud_upload: true
+    nextcloud_folder: ""
+    nextcloud_public_share: true
+    nextcloud_telegram_notification: true
   wednesday_football:
     event_start: "18:15"
     event_stop: "20:05"
@@ -32,6 +40,10 @@ events:
     validation_videos_found: true
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    nextcloud_upload: true
+    nextcloud_folder: ""
+    nextcloud_public_share: true
+    nextcloud_telegram_notification: true
   enge_football:
     event_start: "18:20"
     event_stop: "20:05"
@@ -43,3 +55,7 @@ events:
     validation_videos_found: true
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    nextcloud_upload: true
+    nextcloud_folder: ""
+    nextcloud_public_share: true
+    nextcloud_telegram_notification: true

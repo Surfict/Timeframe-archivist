@@ -81,7 +81,7 @@ $filteredVideos = List-Videos -day $day -event_start $event_start -event_stop $e
 if ($command -eq "list_videos") {
     $videoList = @()
     foreach ($video in $filteredVideos) {
-        $sizeMB = [math]::round($video.ExtendedProperty("System.Size") / 1MB, 2)
+        $sizeMB = [math]::round($video.ExtendedProperty("System.Size") / 1MB, 0)
         $creationDate = $video.ExtendedProperty("System.DateCreated")
         $creationDateTime = [DateTime]$creationDate
         #$formattedCreationDate = $creationDate.ToString("dd/MM/yyyy HH:mm")
@@ -95,15 +95,19 @@ if ($command -eq "list_videos") {
         $formattedCreationDateTargetTZ = $creationDateTargetTZ.ToString("dd/MM/yyyy HH:mm")
         $videoObject = [PSCustomObject]@{
             Name = $video.Name
-            SizeMB = "$sizeMB MB"
+            SizeMB = "$sizeMB"
             CreationDate = $formattedCreationDateTargetTZ
         }
         $videoList += $videoObject
     }
 
     if ($videoList.Count -eq 0) {
-        return "{}"
-    } else {
+        return "[]"
+    } elseif ($videoList.Count -eq 1) {
+        $json_videoList = $videoList | ConvertTo-Json 
+        return "[" + $json_videoList + "]"
+    }
+    else{
         return $videoList | ConvertTo-Json
     }
     

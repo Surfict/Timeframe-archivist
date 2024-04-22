@@ -19,8 +19,9 @@ import os
 
 # Internal files
 from powershell_calls import call_powershell_script
-from utils import Event, Inputs,InputsDataWrapper, windows_to_wsl2_path, get_extension
-from app.s3 import upload_file_to_s3
+from utils import Event, Inputs,InputsDataWrapper,VideosBasicInfos, windows_to_wsl2_path, get_extension
+from s3 import upload_file_to_s3
+from nextcloud import upload_file_to_nextcloud
 
 # Load environment variables from the .env file
 load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
@@ -66,7 +67,11 @@ def yaml_data_to_events(
                           event_timezone=yaml_data["events"][event]["event_timezone"],
                           validation_videos_found=yaml_data["events"][event]["validation_videos_found"],
                           S3_upload=yaml_data["events"][event]["S3_upload"],
-                          S3_storage_class=yaml_data["events"][event]["S3_storage_class"])
+                          S3_storage_class=yaml_data["events"][event]["S3_storage_class"],
+                          nextcloud_upload=yaml_data["events"][event]["nextcloud_upload"],
+                          nextcloud_folder=yaml_data["events"][event]["nextcloud_folder"],
+                          nextcloud_public_share=yaml_data["events"][event]["nextcloud_public_share"],
+                          nextcloud_telegram_notification=yaml_data["events"][event]["nextcloud_telegram_notification"])
                         )
     except KeyError as e:
         raise KeyError(f"Missing expected key in the YAML config file: {e}")
@@ -89,16 +94,16 @@ def generic_prompt(number_start: int, number_end: int) -> int:
     return chosen_number
 
 
-def prompt_validation_videos_found(videos_infos: str) -> boolean:
+def prompt_validation_videos_found(videos_infos: ty.List[VideosBasicInfos]) -> boolean:
     """
     This function order videos_infos by ASC of date creation, 
     displays available videos found on the Iphone, then ask the user
     to validate if it corresponds to what he wants.
     """
     
-    typer.echo("Videos found on the device : ")
+    typer.echo("Video(s) found on the device : ")
     for video in videos_infos:
-        typer.echo(f"Size : {video['SizeMB']} - Date created : {video['CreationDate']} - Name : {video['Name']}")
+        typer.echo(f"Size : {video['SizeMB']} Mb - Date created : {video['CreationDate']} - Name : {video['Name']}")
         
     user_satisfied = typer.confirm("Do you want to continue ? ", default=True)
     
@@ -191,15 +196,14 @@ def check_available_videos(inputs_result: Inputs):
     available_videos_json = json.loads(available_videos)
     if isinstance(available_videos_json, str): 
         available_videos_json = json.loads(available_videos_json) # Thanks to https://stackoverflow.com/questions/25613565/python-json-loads-returning-string-instead-of-dictionary
-    if available_videos_json == {}:
+    if available_videos_json == []:
         raise ValueError(f"No video founds for the given parameters (Day: {inputs_result.day}, Start : {inputs_result.event.event_start} Stop : {inputs_result.event.event_stop} Timezone : {inputs_result.event.event_timezone})")
-    elif isinstance(available_videos_json, dict) and available_videos_json["Error"]:
+    elif isinstance(available_videos_json, dict) and "Error" in available_videos_json:
         raise ValueError(f'{available_videos_json["Error"]}')
     else:
         # Order videos by date created asc
         sorted_videos = sorted(available_videos_json, key=lambda x: x['CreationDate'])
         return sorted_videos
-    
     
 def check_files_correctly_copied(available_videos: str):
     """
@@ -211,7 +215,15 @@ def check_files_correctly_copied(available_videos: str):
         if not file_exists:
             raise ValueError(f"File {video['Name']} has not been correctly copied to {os.getenv('WINDOWS_DESTINATION_FOLDER')}\\{video['Name']}")
         
-# TODO ENUM
+
+
+
+
+    
+    
+    
+    
+
         
 def videos_renaming(available_videos: str, inputs_result: Inputs):
     """
@@ -257,9 +269,19 @@ def videos_renaming(available_videos: str, inputs_result: Inputs):
                 raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
             count = count + 1  
             
-    completed_data_inputs = InputsDataWrapper(inputs_result, )   
         
         
+def wrapp_data_to_inputs(inputs_result: Inputs) -> InputsDataWrapper:
+     """
+    This function gather the windows title, common title and wsl full path of each videos
+    and create an object wrapping thoses and inputs_results
+    """   
+    
+    
+    #completed_data_inputs = InputsDataWrapper(inputs=inputs_result,windows_title=, common_title=, wsl_full_path= )   
+
+    
+    
 def rename_videos_for_windows(available_videos: str, inputs_result: Inputs):
     """
     This function rename the videos with the desired selected options by the user on the Windows host
@@ -293,7 +315,7 @@ def rename_videos_for_windows(available_videos: str, inputs_result: Inputs):
                 raise ValueError(f"Failed to rename {video_old_path} to {video_new_path}: {str(e)} \n This could be due to the use of forbidden caracters in the title of the video for windows files.")
             count = count + 1
 
-    
+# TODO ENUM FOR parameter send to powershell script
 
 def main(
     log_level: int = logging.INFO,
@@ -312,18 +334,26 @@ def main(
                       event_timezone="Romance Standard Time",
                       validation_videos_found=True,
                       S3_upload=True,
-                      S3_storage_class="DEEP_ARCHIVE")
-    inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="")
+                      S3_storage_class="DEEP_ARCHIVE",
+                      nextcloud_upload=True,
+                      nextcloud_folder="wdwd",
+                      nextcloud_public_share=True,
+                      nextcloud_telegram_notification=True)
+    #inputs_result = Inputs(day="17/04/2024", event=event, complex_title_end="") # 0 videos
+    inputs_result = Inputs(day="19/04/2024", event=event, complex_title_end="") # 1 videos
+    #inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="") # 2 videos
+
     try:
         #events : ty.List[Event] = yaml_data_to_events(EVENTS_YAML_PATH)   
         #inputs_result = prompt_options(events)
-        #available_videos = check_available_videos(inputs_result)
-        #if inputs_result.event.validation_videos_found:  
-        #    prompt_validation_videos_found(available_videos)
+        available_videos = check_available_videos(inputs_result)
+        if inputs_result.event.validation_videos_found:  
+            prompt_validation_videos_found(available_videos)
         #copy_videos_to_windows(inputs_result)
         #check_files_correctly_copied(available_videos)
         #rename_videos_for_windows(available_videos, inputs_result)
-        upload_file_to_s3(inputs_result)
+        #upload_file_to_s3(inputs_result)
+        #upload_file_to_nextcloud(inputs_result)
         
 
     except ValueError as e:
