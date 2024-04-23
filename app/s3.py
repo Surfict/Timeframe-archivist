@@ -2,7 +2,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 import os
 
-from utils import Event, Inputs
+from definitions import Event, Inputs
 
 
 def create_s3_client():

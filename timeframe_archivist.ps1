@@ -78,6 +78,7 @@ $SourceFolder = ($PhoneFolder.Items() | where {$_.IsFolder} | where Name -eq $ph
 
 $filteredVideos = List-Videos -day $day -event_start $event_start -event_stop $event_stop -SourceFolder $SourceFolder -EventTimezone $event_timezone
 
+
 if ($command -eq "list_videos") {
     $videoList = @()
     foreach ($video in $filteredVideos) {
@@ -94,9 +95,9 @@ if ($command -eq "list_videos") {
         # Format the DateTime to string in the target timezone
         $formattedCreationDateTargetTZ = $creationDateTargetTZ.ToString("dd/MM/yyyy HH:mm")
         $videoObject = [PSCustomObject]@{
-            Name = $video.Name
-            SizeMB = "$sizeMB"
-            CreationDate = $formattedCreationDateTargetTZ
+            original_name = $video.Name
+            size_mb = "$sizeMB"
+            creation_date = $formattedCreationDateTargetTZ
         }
         $videoList += $videoObject
     }
@@ -115,9 +116,8 @@ if ($command -eq "list_videos") {
 }
 
 elseif ($command -eq "copy_files") {
-
-    $totalItems = $filteredVideos.count
-    if ($totalItems -gt 0)
+    
+    if (($filteredVideos | Measure-Object).Count -gt 0)
     {
         # If destination path doesn't exist, create it only if we have some items to move
         if (-not (test-path $files_destination_path) )
@@ -153,9 +153,9 @@ elseif ($command -eq "copy_files") {
                 }
             }
         }
+        return '{"Result" : "Success"}' | ConvertTo-Json
     }
-    return '{"Result" "Success"}' | ConvertTo-Json
-
+    return '{"Error" : "No video to copy"}' | ConvertTo-Json
 }
 
 elseif ($command -eq "delete_files") {
