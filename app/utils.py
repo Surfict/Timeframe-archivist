@@ -45,3 +45,7 @@ def validate_date_format(date_str):
     if re.match(r'\d{2}/\d{2}/\d{4}', date_str):
         return True
     return False
+
+def normalize_folders_path(folders_path: str) -> str:
+    # Normalize the folder path and remove / at the beginning and at the end
+    return folders_path.strip('/')

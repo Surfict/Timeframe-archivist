@@ -11,7 +11,7 @@ events:
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
     nextcloud_upload: true
-    nextcloud_folder: "tgt"
+    nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
     nextcloud_telegram_notification: true
   wollishofen_wolves:
@@ -26,7 +26,7 @@ events:
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
     nextcloud_upload: true
-    nextcloud_folder: "tg"
+    nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
     nextcloud_telegram_notification: true
   wednesday_football:
@@ -41,7 +41,7 @@ events:
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
     nextcloud_upload: true
-    nextcloud_folder: "tg"
+    nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
     nextcloud_telegram_notification: true
   enge_football:
@@ -56,6 +56,6 @@ events:
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
     nextcloud_upload: true
-    nextcloud_folder: "tg"
+    nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
     nextcloud_telegram_notification: true

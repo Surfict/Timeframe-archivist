@@ -84,3 +84,10 @@ class VideoInfosWrapper(BaseModel):
     video_basic_infos: VideoBasicInfos
     new_name: str
     wsl_full_path: str 
+    
+class NextCloudInfos(BaseModel):
+    user: str
+    password: str
+    base_url: str
+    webdav_url: str
+    ocs_url: str

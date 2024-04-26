@@ -49,6 +49,8 @@ def wrapp_data_to_videos(inputs_result: Inputs, videos : ty.List[VideoBasicInfos
         for video in videos:
             video_extension = get_extension(video.original_name)
             video_final_title = f"{video_title} (Part {count} of {len_videos}).{video_extension}"
+            # test
+            video_final_title = video_final_title.replace(' ', '_')
             wsl_full_path=f"{wsl2_path}/{video_final_title}"
             videosInfosWrapper = VideoInfosWrapper(video_basic_infos=video, new_name=video_final_title, wsl_full_path=wsl_full_path)
             video_titles.append(videosInfosWrapper)

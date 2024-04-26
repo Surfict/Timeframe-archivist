@@ -20,7 +20,7 @@ from definitions import Event, Inputs,VideoBasicInfos, VideoInfosWrapper
 from inputs import yaml_data_to_events, prompt_options, prompt_validation_videos_found
 
 from s3 import upload_file_to_s3
-from nextcloud import upload_file_to_nextcloud
+from nextcloud import upload_file_to_nextcloud, create_public_shares
 
 # Load environment variables from the .env file
 load_dotenv(override=True) # Erase WSL2 env variable that were conflicting
@@ -52,7 +52,7 @@ def main(
                       S3_upload=True,
                       S3_storage_class="DEEP_ARCHIVE",
                       nextcloud_upload=True,
-                      nextcloud_folder="wdwd",
+                      nextcloud_folder="/test2/wollishofen/15",
                       nextcloud_public_share=True,
                       nextcloud_telegram_notification=True)
     #inputs_result = Inputs(day="17/04/2024", event=event, complex_title_end="") # 0 videos
@@ -65,12 +65,14 @@ def main(
         available_videos : ty.List[VideoBasicInfos]  = check_available_videos(inputs_result)
         #if inputs_result.event.validation_videos_found:  
         #    prompt_validation_videos_found(available_videos)
-        copy_videos_to_windows(inputs_result)
-        check_files_correctly_copied(available_videos)
+        #copy_videos_to_windows(inputs_result)
+        #check_files_correctly_copied(available_videos)
         videos_with_wrapped_data = wrapp_data_to_videos(inputs_result, available_videos)
-        rename_videos_for_windows(videos_with_wrapped_data)
+        #rename_videos_for_windows(videos_with_wrapped_data)
         #upload_file_to_s3(inputs_result)
-        #upload_file_to_nextcloud(inputs_result)
+        files_nextcloud_locations = upload_file_to_nextcloud(videos_with_wrapped_data, inputs_result)
+        shares = create_public_shares(files_nextcloud_locations)
+        print(shares)
         
 
     except ValueError as e:
