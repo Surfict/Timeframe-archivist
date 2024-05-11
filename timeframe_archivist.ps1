@@ -74,7 +74,15 @@ if ($null -eq $PhoneFolder) {
     return '{"Error" : "Iphone not found. Check that it is correctly plugged in your machine."}' | ConvertTo-Json
 }
 
-$SourceFolder = ($PhoneFolder.Items() | where {$_.IsFolder} | where Name -eq $phoneRelativePath).GetFolder
+# After being connected, the Iphone can takes time to be available. We check every two seconds until we can access the folders.
+$SourceFolder = $null
+
+while ($null -eq $SourceFolder) {
+        $SourceFolder = ($PhoneFolder.Items() | where {$_.IsFolder} | where Name -eq $phoneRelativePath).GetFolder
+        if ($null -eq $SourceFolder) {
+            Start-Sleep -Seconds 2
+        }
+}
 
 $filteredVideos = List-Videos -day $day -event_start $event_start -event_stop $event_stop -SourceFolder $SourceFolder -EventTimezone $event_timezone
 
@@ -103,7 +111,7 @@ if ($command -eq "list_videos") {
     }
 
     if ($videoList.Count -eq 0) {
-        return "[]"
+        return "[]" | ConvertTo-Json
     } elseif ($videoList.Count -eq 1) {
         $json_videoList = $videoList | ConvertTo-Json 
         return "[" + $json_videoList + "]"
