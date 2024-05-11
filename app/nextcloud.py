@@ -1,7 +1,10 @@
 import xml.etree.ElementTree as ET
+import json
 import os
+import pprint
 import requests
 from requests.auth import HTTPBasicAuth
+import typer
 import typing as ty
 
 #
@@ -86,7 +89,7 @@ def create_folders_if_they_do_not_exist(folders_path : str):
     
     """
     This function create all the folder in folders_path if they do not exist
-    A folder can't be created if it parents does not exist.
+    A folder can't be created if it parent does not exist.
     """
     
     nextcloud_infos = get_nextcloud_infos()
@@ -105,7 +108,7 @@ def create_folders_if_they_do_not_exist(folders_path : str):
                 # Try to create the folder
                 response = requests.request('MKCOL', full_url, auth=HTTPBasicAuth(nextcloud_infos.user, nextcloud_infos.password))
                 if response.status_code == 201:
-                    print(f"Folder {path_to_create} created successfully")
+                    typer.echo(f"Folder {path_to_create} created successfully")
                 else:
                     raise ValueError(f"Failed to create the folder {path_to_create}. Status code: {response.status_code}. Response: {response.text}")
                 
@@ -118,6 +121,12 @@ def create_folders_if_they_do_not_exist(folders_path : str):
 
 
 def upload_file_to_nextcloud(videos: ty.List[VideoInfosWrapper], inputs_result: Inputs) -> ty.List[str]:
+    
+    """
+    This function upload the list of videos in parameter into nextcloud.
+    It return the list of the files's location on Nextcloud after having been uploaded.
+    
+    """
     
     nextcloud_infos = get_nextcloud_infos()
     nextcloud_folder = normalize_folders_path(inputs_result.event.nextcloud_folder)
@@ -136,9 +145,12 @@ def upload_file_to_nextcloud(videos: ty.List[VideoInfosWrapper], inputs_result: 
 
             # Check if the upload was successful
             if response.status_code == 201:
-                print(f"File {video.new_name} uploaded successfully. Go to {full_url} Status code: {response.status_code}, Response: {response.text}")
+                typer.echo(f"File {video.new_name} uploaded successfully. Go to {full_url} Status code: {response.status_code}, Response: {response.content}")
                 files_locations.append(f"{nextcloud_folder}/{video.new_name}")                
-            else:
-                print(f"Failed to upload file {video.new_name} Status code: {response.status_code}, Response: {response.text}")
+            elif response.status_code == 204:
+                 typer.echo(f"File {video.new_name} overwritten successfully. Go to {full_url}")  
+                 files_locations.append(f"{nextcloud_folder}/{video.new_name}")    
+            else: 
+                raise ValueError(f"Failed to upload file {video.new_name} Status code: {response.status_code}, Response: {response.content}")
                 
     return files_locations
