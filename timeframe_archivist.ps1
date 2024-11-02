@@ -1,3 +1,4 @@
+
 param(
     [string]$day, # Expected format: YYYY-MM-DD
     [string]$event_start, # Expected format: HH:mm
@@ -36,10 +37,10 @@ function List-Videos {
 
     $yearMonth = $day.Substring(5,5).Replace("/","") + $day.Substring(2,4).Replace("/","") # Extract YYYYMM format
     # Filter folders that start with YYYYMM
-    $test = $SourceFolder.Items()
     $folders = $SourceFolder.Items() | Where-Object { $_.IsFolder -and $_.Name.StartsWith($yearMonth) }
 
     foreach ($folder in $folders) {
+        Write-Host $folder.GetFolder.Name
 		#$a = $folder.Name
         $items = $folder.GetFolder.Items() | Where-Object { ($_.Name -like "*.mp4" -or $_.Name -like "*.MOV") }
         foreach ($item in $items) {
@@ -51,16 +52,6 @@ function List-Videos {
             }
         }
     }
-
-
-
-    # Display or further process the filtered files
-  #  $filteredFiles | ForEach-Object {
-  #      $size = [math]::round($($_.ExtendedProperty("System.Size")) /1Mb, 0)
-  #      Write-Host "Filtered file:  $size MB"
-  #      Write-Host "Filtered file:  $($_.ExtendedProperty("System.Size"))"
-  #      #Write-Host "Filtered file:  $($_.Name)"
-  #  }
 
     return $filteredFiles
 }
@@ -167,8 +158,30 @@ elseif ($command -eq "copy_files") {
 }
 
 elseif ($command -eq "delete_files") {
-    Write-Host "delete_files"
+    $deleteResults = @()
 
+    foreach ($file in $filteredVideos) {
+        try {
+            # Use the InvokeVerb method on the COM object to delete the file
+            $file.InvokeVerb("delete")
+            $result = [PSCustomObject]@{
+                FileName = $file.Name
+                Status = "Deleted Successfully"
+            }
+        } catch {
+            $result = [PSCustomObject]@{
+                FileName = $file.Name
+                Status = "Failed to Delete: $_"
+            }
+        }
+        $deleteResults += $result
+    }
+
+    if ($deleteResults.Count -eq 0) {
+        return '{"Error" : "No video to delete"}' | ConvertTo-Json
+    } else {
+        return $deleteResults | ConvertTo-Json
+    }
 }
 # Case 
 else {

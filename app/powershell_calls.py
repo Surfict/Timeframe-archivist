@@ -59,3 +59,15 @@ def check_available_videos(inputs_result: Inputs) -> ty.List[VideoBasicInfos]:
         for video in sorted_videos:
             video_basic_infos_list.append(VideoBasicInfos(size_mb=video["size_mb"], creation_date=video["creation_date"], original_name=video["original_name"]))
         return video_basic_infos_list
+    
+    
+def delete_videos(inputs_result: Inputs) -> None:
+    deletion_result = call_powershell_script(inputs_result.day, inputs_result.event.event_start, inputs_result.event.event_stop, inputs_result.event.event_timezone, PowershellCommandParameter.DELETE_FILES)
+    deletion_result_json = json.loads(deletion_result)
+    if isinstance(deletion_result_json, str):
+        deletion_result_json = json.loads(deletion_result_json) # Thanks to https://stackoverflow.com/questions/25613565/python-json-loads-returning-string-instead-of-dictionary
+    if isinstance(deletion_result_json, dict) and "Error" in deletion_result_json:
+        raise ValueError(f'{deletion_result_json["Error"]}')
+    else:
+        typer.echo(f"Files deleted with success")
+    

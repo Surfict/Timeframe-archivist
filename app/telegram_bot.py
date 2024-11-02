@@ -1,6 +1,7 @@
 import os
 import telegram
 from telegram.error import InvalidToken, BadRequest, Forbidden
+import typing as ty
 
 async def send_message_to_telegram_conversation(message: str) -> None:
     """
@@ -22,10 +23,12 @@ async def send_message_to_telegram_conversation(message: str) -> None:
         else:
             raise ValueError(f"Bad request: {e}")
 
-def format_links_message(messages: str) -> str:
+def format_links_message(messages: ty.List[str]) -> str:
+    """
+    Return a list of video links into one formated string
+    """
     return_string = ""
     for message in messages:
-        return_string = return_string + message
-        
-    return return_string
+        return_string = return_string + message + " "
     
+    return return_string[:-1]

@@ -7,13 +7,13 @@ from utils import windows_to_wsl2_path, get_extension
 
 
 
-def check_files_correctly_copied(available_videos: ty.List[VideoBasicInfos]):
+def check_files_correctly_copied(available_videos: ty.List[VideoBasicInfos]) -> None:
     """
     This function checks if the files copied with powershell script are present on Windows
     """
     for video in available_videos:
-        wsl2_path = windows_to_wsl2_path(os.getenv("WINDOWS_DESTINATION_FOLDER"))
-        file_exists = os.path.exists(wsl2_path + "/" + video.original_name)
+        wsl2_path: str = windows_to_wsl2_path(os.getenv("WINDOWS_DESTINATION_FOLDER"))
+        file_exists: bool = os.path.exists(wsl2_path + "/" + video.original_name)
         if not file_exists:
             raise ValueError(f"File {video.original_name} has not been correctly copied to {os.getenv('WINDOWS_DESTINATION_FOLDER')}\\{video.original_name}")
         
@@ -58,7 +58,7 @@ def wrapp_data_to_videos(inputs_result: Inputs, videos : ty.List[VideoBasicInfos
         return video_titles
     
     
-def rename_videos_for_windows(videos : ty.List[VideoInfosWrapper]):
+def rename_videos_for_windows(videos : ty.List[VideoInfosWrapper]) -> None:
     """
     This function rename the videos with the desired selected options by the user on the Windows host
     """

@@ -8,8 +8,11 @@ events:
     complex_name_format_helper: "Format awaited : 'Goal diggers 15 - 5 opponent_name'"
     title_end_with_date: true
     validation_videos_found: true
+    delete_videos_from_iphone: false
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    S3_bucket: "timeframe_archivist"
+    S3_folder: "ufutsal"
     nextcloud_upload: true
     nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
@@ -23,8 +26,11 @@ events:
     complex_name_format_helper:
     title_end_with_date: true
     validation_videos_found: true
+    delete_videos_from_iphone: false
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    S3_bucket: "timeframe_archivist"
+    S3_folder: "wollishofen_wolves"
     nextcloud_upload: true
     nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
@@ -38,8 +44,11 @@ events:
     complex_name_format_helper:
     title_end_with_date: true
     validation_videos_found: true
+    delete_videos_from_iphone: false
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    S3_bucket: "timeframe_archivist"
+    S3_folder: "wednesday_football"
     nextcloud_upload: true
     nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true
@@ -53,8 +62,11 @@ events:
     complex_name_format_helper:
     title_end_with_date: true
     validation_videos_found: true
+    delete_videos_from_iphone: false
     S3_upload: true
     S3_storage_class: "DEEP_ARCHIVE"
+    S3_bucket: "timeframe_archivist"
+    S3_folder: "enge_football"
     nextcloud_upload: true
     nextcloud_folder: "test/wollishofen"
     nextcloud_public_share: true

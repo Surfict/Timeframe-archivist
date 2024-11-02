@@ -17,9 +17,12 @@ class Event(BaseModel):
     complex_name_format_helper: str | None 
     title_end_with_date: bool
     event_timezone: str
+    delete_videos_from_iphone: bool
     validation_videos_found: bool
     S3_upload: bool
     S3_storage_class: str | None
+    S3_bucket: str | None
+    S3_folder: str | None
     nextcloud_upload: bool
     nextcloud_folder: str | None
     nextcloud_public_share : bool | None
@@ -38,6 +41,13 @@ class Event(BaseModel):
         if 'S3_upload' in values and values['S3_upload']:
             if not v:
                 raise ValueError('S3_storage_class is mandatory when S3_upload is True')
+        return v
+    
+    @validator('S3_bucket', always=True, pre=True)
+    def check_S3_bucket_value_based_on_S3_upload(cls, v: Any, values: dict[str, Any]):
+        if 'S3_upload' in values and values['S3_upload']:
+            if not v:
+                raise ValueError('S3_bucket is mandatory when S3_upload is True')
         return v
     
     @validator('nextcloud_folder', always=True, pre=True)

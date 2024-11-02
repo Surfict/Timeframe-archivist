@@ -16,7 +16,7 @@ import typing as ty
 
 # Internal files
 from files import check_files_correctly_copied, rename_videos_for_windows, wrapp_data_to_videos
-from powershell_calls import check_available_videos, copy_videos_to_windows
+from powershell_calls import check_available_videos, copy_videos_to_windows,delete_videos
 from definitions import Event, Inputs,VideoBasicInfos, VideoInfosWrapper
 from inputs import yaml_data_to_events, prompt_options, prompt_validation_videos_found
 from telegram_bot import send_message_to_telegram_conversation, format_links_message
@@ -43,7 +43,7 @@ def main(
     console = Console()
     typer.echo(f"Welcome to the Timeframe Archivist !")
 
-    event =  Event(event_start="19:45",
+    event =  Event(event_start="16:45",
                       event_stop="22:30",
                       complex_naming=False, 
                       video_title="Wednesday football", 
@@ -51,6 +51,7 @@ def main(
                       title_end_with_date=True,
                       event_timezone="Romance Standard Time",
                       validation_videos_found=True,
+                      delete_videos_from_iphone= True,
                       S3_upload=True,
                       S3_storage_class="DEEP_ARCHIVE",
                       S3_bucket="timeframe-archivist",
@@ -60,7 +61,7 @@ def main(
                       nextcloud_public_share=True,
                       nextcloud_telegram_notification=True)
     #inputs_result = Inputs(day="17/04/2024", event=event, complex_title_end="") # 0 videos
-    inputs_result = Inputs(day="23/04/2024", event=event, complex_title_end="") # 2 videos
+    inputs_result = Inputs(day="12/05/2024", event=event, complex_title_end="") # 2 videos
     #inputs_result = Inputs(day="25/03/2024", event=event, complex_title_end="") # 2 videos
 
     try:
@@ -79,8 +80,10 @@ def main(
         #    message = format_links_message(shares)
         #    asyncio.run(send_message_to_telegram_conversation(message))
         #S3
-        if inputs_result.event.S3_upload:  
-            upload_videos_to_s3(inputs_result, videos_with_wrapped_data)
+        #if inputs_result.event.S3_upload:  
+        #    upload_videos_to_s3(inputs_result, videos_with_wrapped_data)
+        if inputs_result.event.delete_videos_from_iphone:
+            delete_videos(inputs_result)
             
       
         

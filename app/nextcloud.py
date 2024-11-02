@@ -1,7 +1,5 @@
 import xml.etree.ElementTree as ET
-import json
 import os
-import pprint
 import requests
 from requests.auth import HTTPBasicAuth
 import typer
@@ -145,7 +143,7 @@ def upload_file_to_nextcloud(videos: ty.List[VideoInfosWrapper], inputs_result: 
 
             # Check if the upload was successful
             if response.status_code == 201:
-                typer.echo(f"File {video.new_name} uploaded successfully. Go to {full_url} Status code: {response.status_code}, Response: {response.content}")
+                typer.echo(f"File {video.new_name} uploaded successfully. Go to {full_url}")
                 files_locations.append(f"{nextcloud_folder}/{video.new_name}")                
             elif response.status_code == 204:
                  typer.echo(f"File {video.new_name} overwritten successfully. Go to {full_url}")  
