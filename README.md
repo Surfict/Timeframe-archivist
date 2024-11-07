@@ -22,6 +22,8 @@ It is designed to work with the following stack :
 1) Fill the file events.yml to your liking
 
 2) Copy past the env-example to .env, and fill it (WIP)
+
+3) Run
 ```
 docker compose run timeframe_archivist
 ```
